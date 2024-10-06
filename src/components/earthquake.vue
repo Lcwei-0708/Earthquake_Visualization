@@ -140,12 +140,14 @@
 
     export default {
     setup() {
+        // 定義響應式變量
         const earthquakeData = ref([]);
         const selectedEarthquake = ref(null);
         const isMobile = ref(window.innerWidth < 768);
         const isMobileListVisible = ref(false);
         const showDetailModal = ref(false);
         let svg, g, projectmethod, pathGenerator;
+        // 定義顏色比例尺
         const colorScale = d3.scaleSequential(d3.interpolateReds).domain([0, 10]);
 
         // 中文顏色到 class 名稱的映射
@@ -161,10 +163,12 @@
         return colorToClassMap[reportColor] || '';
         }
 
+        // 處理視窗大小變化
         function handleResize() {
             isMobile.value = window.innerWidth < 768;
         }
 
+        // 組件掛載時的操作
         onMounted(() => {
             window.addEventListener('resize', handleResize);
             initializeMap();
@@ -172,10 +176,12 @@
             setInterval(refreshDataAndMap, 60000);
         });
 
+        // 組件卸載前的清理操作
         onBeforeUnmount(() => {
             window.removeEventListener('resize', handleResize);
         });
 
+        // 初始化地圖
         function initializeMap() {
         svg = d3.select(".taiwan")
             .attr("preserveAspectRatio", "xMidYMid meet")
@@ -192,8 +198,8 @@
             .enter()
             .append("path")
             .attr("d", pathGenerator)
-            .attr("class", "county") // 確保這裡有正確的類別
-            .attr("fill", "var(--bg2-color)") // 初始顏色
+            .attr("class", "county")
+            .attr("fill", "var(--bg2-color)")
             .attr("stroke", "var(--font-color)")
             .attr("opacity", 0.5)
             .on("mouseover", (event, d) => handleCountyHover(event, d))
@@ -201,6 +207,7 @@
             .on("mouseout", (event, d) => handleCountyMouseOut(event, d));
         }
 
+        // 繪製地圖
         function drawMap(selectedEarthquake) {
         const features = topojson.feature(taiwanMapData, taiwanMapData.objects.Taiwan).features;
         const paths = g.selectAll("path")
@@ -209,59 +216,81 @@
         paths.attr("fill", d => getCountyFillColor(d, selectedEarthquake));
         }
 
+        // 獲取初始比例
         function getInitialScale() {
         if (window.innerWidth < 768) return 16000;
         if (window.innerWidth < 1200) return 15000;
         return 15000;
         }
 
+        // 獲取地震數據
         async function fetchEarthquakeData() {
-        try {
-            const response = await fetch('https://api.lcwei.site/api/earthquake_data', {
-            method: 'GET',
-            headers: { 
-                'Content-Type': 'application/json'
+            try {
+                const response = await fetch('https://api.lcwei.site/api/earthquake_data', {
+                    method: 'GET',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                earthquakeData.value = data.earthquakes.map(eq => ({
+                    ...eq,
+                    intensity: eq.maxIntensity + "級",
+                    datetime: eq.originTime
+                }));
+            } catch (error) {
+                console.error("Error fetching earthquake data:", error);
             }
-            });
-            const data = await response.json();
-            earthquakeData.value = data.earthquakes.map(eq => ({
-            ...eq,
-            intensity: eq.maxIntensity + "級",
-            datetime: eq.originTime
-            }));
-            if (earthquakeData.value.length > 0) {
-            selectEarthquake(0);
-            }
-        } catch (error) {
-            console.error("Error fetching earthquake data:", error);
-        }
         }
 
+        // 用於存儲上一次的地震數據
+        let previousEarthquakeData = []
+
+        // 刷新數據和地圖
         function refreshDataAndMap() {
-        fetchEarthquakeData().then(() => {
-            if (earthquakeData.value.length > 0) {
-            selectedEarthquake.value = earthquakeData.value[0];
-            markEarthquakeLocations(selectedEarthquake.value);
-            drawMap(selectedEarthquake.value);
-            }
-        });
+            fetchEarthquakeData().then(() => {
+                if (earthquakeData.value.length > 0) {
+                    // 檢查新數據是否與之前的數據相同
+                    const isDataChanged = JSON.stringify(earthquakeData.value) !== JSON.stringify(previousEarthquakeData);
+
+                    if (isDataChanged) {
+                        // 更新 previousEarthquakeData 為當前的 earthquakeData
+                        previousEarthquakeData = JSON.parse(JSON.stringify(earthquakeData.value));
+
+                        // 如果數據有變化，更新 earthquakeData
+                        earthquakeData.value = previousEarthquakeData;
+
+                        // 如果有新的資料，選擇第一筆
+                        selectedEarthquake.value = earthquakeData.value[0];
+                    } else {
+                        // 如果沒有新的資料，保持當前選擇的地震不變
+                        const currentSelection = selectedEarthquake.value;
+                        selectedEarthquake.value = earthquakeData.value.find(eq => eq.earthquakeNo === currentSelection.earthquakeNo) || earthquakeData.value[0];
+                    }
+
+                    // 重繪地圖
+                    markEarthquakeLocations(selectedEarthquake.value);
+                    drawMap(selectedEarthquake.value);
+                }
+            });
         }
 
+        // 標記地震位置
         function markEarthquakeLocations(selected) {
         clearExistingMarkers();
         createMainMarker(selected);
         }
 
+        // 清除現有標記
         function clearExistingMarkers() {
         g.selectAll(".earthquake-marker-main").remove();
         }
 
+        // 創建主要標記
         function createMainMarker(earthquake) {
-        // 清除現有的地震標記和擴散效果
         g.selectAll(".earthquake-marker-main").remove();
         g.selectAll(".earthquake-radar").remove();
 
-        // 擴散效果的圓
         const radar = g.append("circle")
             .data([earthquake])
             .attr("class", "earthquake-radar")
@@ -271,7 +300,6 @@
             .attr("fill", "var(--sp-color)")
             .attr("opacity", 0.5);
 
-        // 固定的地震標記
         const marker = g.append("circle")
             .data([earthquake])
             .attr("class", "earthquake-marker-main")
@@ -289,7 +317,6 @@
                 }
             });
 
-        // 添加雷達擴散效果
         function animateRadar() {
             radar.transition()
             .duration(1000)
@@ -305,6 +332,7 @@
         animateRadar();
         }
 
+        // 選擇地震
         function selectEarthquake(index) {
         const earthquake = earthquakeData.value[index];
         if (!earthquake) return;
@@ -312,12 +340,13 @@
         selectedEarthquake.value = earthquake;
         markEarthquakeLocations(earthquake);
         updateSelectedRow();
-        updateMapColors(); // 更新地圖顏色
+        updateMapColors();
         if (isMobileListVisible.value) {
             toggleMobileList();
         }
         }
 
+        // 更新選中行
         function updateSelectedRow() {
         d3.selectAll(".earthquake .table-tr").classed("selected", false);
         d3.select(`.earthquake .table-tr[data-id='${selectedEarthquake.value.earthquakeNo}']`).classed("selected", true);
@@ -358,12 +387,13 @@
         positionTooltip(event);
         }
 
+        // 處理縣市鼠標移出事件
         function handleCountyMouseOut(event, d) {
         d3.select(event.currentTarget).style("opacity", 0.5);
         d3.select(".county-tip").style("visibility", "hidden");
         }
 
-        // 更工具提示內容
+        // 更新工具提示內容
         function updateTooltipContent(countyName, intensityValue) {
         d3.select("#tooltip-county").text(countyName);
         d3.select("#tooltip-intensity").text(intensityValue + "級");
@@ -382,14 +412,12 @@
         let left = event.pageX + 10;
         let top = event.pageY - tooltipHeight - 10;
 
-        // 檢查是否超出右邊界
         if (left + tooltipWidth > pageWidth) {
-            left = event.pageX - tooltipWidth - 10; // 改成左上方顯示
+            left = event.pageX - tooltipWidth - 10;
         }
 
-        // 檢查是否超出上邊界
         if (top < 0) {
-            top = event.pageY + 10; // 改成下方顯示
+            top = event.pageY + 10;
         }
 
         tooltip.style("left", `${left}px`)
@@ -397,11 +425,13 @@
                .style("visibility", "visible");
         }
 
+        // 更新地圖顏色
         function updateMapColors() {
         g.selectAll("path")
             .attr("fill", d => getCountyFillColor(d, selectedEarthquake.value));
         }
 
+        // 切換移動端列表顯示
         function toggleMobileList() {
             isMobileListVisible.value = !isMobileListVisible.value;
         }
@@ -431,9 +461,6 @@
   justify-content: center;  
 }
 
-/*--------------------------------------------------------------
-# Map and Info Containers
---------------------------------------------------------------*/
 .map-container {
     margin: auto 30px;
     flex: 1;
@@ -456,9 +483,6 @@
     margin: 20px auto;
 }
 
-/*--------------------------------------------------------------
-# County and Tooltip
---------------------------------------------------------------*/
 .county {
     stroke: var(--font-color);
     stroke-width: 1px;
@@ -485,10 +509,6 @@ path.county:hover {
     display: flex;
     gap: 10px;
 }
-
-/*--------------------------------------------------------------
-# Table
---------------------------------------------------------------*/
 
 .post-table {	
     margin: 20px 0;
@@ -535,9 +555,9 @@ path.county:hover {
 
 .table-th {
     display: flex;
-    justify-content: center; /* 讓標題左右置中 */
-    align-items: center; /* 垂直置中 */
-    position: relative; /* 讓關閉按鈕絕對定位 */
+    justify-content: center;
+    align-items: center;
+    position: relative;
     padding: 10px 15px;
     font-size: 20px;
     background-color: var(--bg3-color);
@@ -676,12 +696,12 @@ path.county:hover {
 
 .close-button {
     position: absolute;
-    right: 10px; /* 靠右 */
+    right: 10px;
     background: none;
     border: none;
     cursor: pointer;
     display: flex;
-    align-items: center; /* 垂直置中 */
+    align-items: center;
 }
 
 .close-button .close-icon {

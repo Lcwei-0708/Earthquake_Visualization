@@ -4,16 +4,18 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+
   // 加載環境變數
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
+    base: '/Earthquake_Visualization/', // 設置為你的 GitHub Pages 路徑    
+    publicPath: '/earthquake-visualization',
     plugins: [
       vue({
         include: [/\.vue$/],
       }),
     ],
-    base: env.VITE_BASE_URL || '/', // 使用環境變數設置基礎路徑
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
