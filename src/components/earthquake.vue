@@ -1,6 +1,7 @@
-<template>
+<template>    
+    <div v-if="loading" class="loading-indicator">載入中...</div>
     <div id="main" class="main">
-        <table v-if="isMobile" id="mobile-table" class="post-table mobile-table">
+        <table v-if="isMobile && !loading" id="mobile-table" class="post-table mobile-table">
             <thead class="table-header mobile-title" @click="toggleMobileList">
                 <tr class="table-tr">
                     <th class="table-th center" colspan="2">
@@ -27,10 +28,10 @@
                 </tr>
             </tbody>
         </table> 
-        <div class="map-container">
+        <div class="map-container" :class="{ 'hidden': loading }">
             <svg class="taiwan"></svg>
         </div>
-        <div v-if="!isMobile" class="info-container">
+        <div v-if="!isMobile && !loading" class="info-container">
             <table id="detail-table" class="post-table detail">
                 <thead class="table-header">
                 <tr class="table-tr">
@@ -146,16 +147,17 @@
         const isMobile = ref(window.innerWidth < 768);
         const isMobileListVisible = ref(false);
         const showDetailModal = ref(false);
+        const loading = ref(true);
         let svg, g, projectmethod, pathGenerator;
         // 定義顏色比例尺
         const colorScale = d3.scaleSequential(d3.interpolateReds).domain([0, 10]);
 
         // 中文顏色到 class 名稱的映射
         const colorToClassMap = {
-        '綠色': 'lv-1',
-        '黃色': 'lv-2',
-        '橙色': 'lv-3',
-        '紅色': 'lv-4'
+            '綠色': 'lv-1',
+            '黃色': 'lv-2',
+            '橙色': 'lv-3',
+            '紅色': 'lv-4'
         };
 
         // 根據 reportColor 返回對應的 class 名稱
@@ -209,18 +211,17 @@
 
         // 繪製地圖
         function drawMap(selectedEarthquake) {
-        const features = topojson.feature(taiwanMapData, taiwanMapData.objects.Taiwan).features;
-        const paths = g.selectAll("path")
-            .data(features);
-
-        paths.attr("fill", d => getCountyFillColor(d, selectedEarthquake));
+            const features = topojson.feature(taiwanMapData, taiwanMapData.objects.Taiwan).features;
+            const paths = g.selectAll("path")
+                .data(features);
+            paths.attr("fill", d => getCountyFillColor(d, selectedEarthquake));
         }
 
         // 獲取初始比例
         function getInitialScale() {
-        if (window.innerWidth < 768) return 16000;
-        if (window.innerWidth < 1200) return 15000;
-        return 15000;
+            if (window.innerWidth < 768) return 16000;
+            if (window.innerWidth < 1200) return 15000;
+            return 15000;
         }
 
         // 獲取地震數據
@@ -240,6 +241,9 @@
                 }));
             } catch (error) {
                 console.error("Error fetching earthquake data:", error);
+            }
+            finally {
+                loading.value = false;
             }
         }
 
@@ -277,158 +281,164 @@
 
         // 標記地震位置
         function markEarthquakeLocations(selected) {
-        clearExistingMarkers();
-        createMainMarker(selected);
+            clearExistingMarkers();
+            createMainMarker(selected);
         }
 
         // 清除現有標記
         function clearExistingMarkers() {
-        g.selectAll(".earthquake-marker-main").remove();
+            // 停止所有正在進行的過渡動畫
+            g.selectAll(".earthquake-radar").interrupt();
+            g.selectAll(".earthquake-marker-main").interrupt();
+
+            // 移除所有標記
+            g.selectAll(".earthquake-marker-main").remove();
+            g.selectAll(".earthquake-radar").remove();
         }
 
         // 創建主要標記
         function createMainMarker(earthquake) {
-        g.selectAll(".earthquake-marker-main").remove();
-        g.selectAll(".earthquake-radar").remove();
+            // 清除現有標記和動畫
+            clearExistingMarkers();
 
-        const radar = g.append("circle")
-            .data([earthquake])
-            .attr("class", "earthquake-radar")
-            .attr("cx", d => projectmethod([d.longitude, d.latitude])[0])
-            .attr("cy", d => projectmethod([d.longitude, d.latitude])[1])
-            .attr("r", 15)
-            .attr("fill", "var(--sp-color)")
-            .attr("opacity", 0.5);
+            const radar = g.append("circle")
+                .data([earthquake])
+                .attr("class", "earthquake-radar")
+                .attr("cx", d => projectmethod([d.longitude, d.latitude])[0])
+                .attr("cy", d => projectmethod([d.longitude, d.latitude])[1])
+                .attr("r", 15)
+                .attr("fill", "var(--sp-color)")
+                .attr("opacity", 0.5);
 
-        const marker = g.append("circle")
-            .data([earthquake])
-            .attr("class", "earthquake-marker-main")
-            .attr("cx", d => projectmethod([d.longitude, d.latitude])[0])
-            .attr("cy", d => projectmethod([d.longitude, d.latitude])[1])
-            .attr("r", 15)
-            .attr("fill", "var(--sp-color)")
-            .attr("stroke", "var(--font-color)")
-            .attr("stroke-width", "1px")
-            .attr("opacity", 0.8)
-            .on("click", () => {
-                if (isMobile.value) {
-                    selectedEarthquake.value = earthquake;
-                    showDetailModal.value = true;
-                }
-            });
+            const marker = g.append("circle")
+                .data([earthquake])
+                .attr("class", "earthquake-marker-main")
+                .attr("cx", d => projectmethod([d.longitude, d.latitude])[0])
+                .attr("cy", d => projectmethod([d.longitude, d.latitude])[1])
+                .attr("r", 15)
+                .attr("fill", "var(--sp-color)")
+                .attr("stroke", "var(--font-color)")
+                .attr("stroke-width", "1px")
+                .attr("opacity", 0.8)
+                .on("click", () => {
+                    if (isMobile.value) {
+                        selectedEarthquake.value = earthquake;
+                        showDetailModal.value = true;
+                    }
+                });
 
-        function animateRadar() {
-            radar.transition()
-            .duration(1000)
-            .attr("r", 30)
-            .attr("opacity", 0)
-            .on("end", () => {
-                radar.attr("r", 15)
-                    .attr("opacity", 0.5);
-                animateRadar();
-            });
-        }
+            function animateRadar() {
+                radar.transition()
+                    .duration(1000)
+                    .attr("r", 30)
+                    .attr("opacity", 0)
+                    .on("end", () => {
+                        radar.attr("r", 15)
+                            .attr("opacity", 0.5);
+                        animateRadar();
+                    });
+            }
 
-        animateRadar();
+            animateRadar();
         }
 
         // 選擇地震
         function selectEarthquake(index) {
-        const earthquake = earthquakeData.value[index];
-        if (!earthquake) return;
+            const earthquake = earthquakeData.value[index];
+            if (!earthquake) return;
 
-        selectedEarthquake.value = earthquake;
-        markEarthquakeLocations(earthquake);
-        updateSelectedRow();
-        updateMapColors();
-        if (isMobileListVisible.value) {
-            toggleMobileList();
-        }
+            selectedEarthquake.value = earthquake;
+            markEarthquakeLocations(earthquake);
+            updateSelectedRow();
+            updateMapColors();
+            if (isMobileListVisible.value) {
+                toggleMobileList();
+            }
         }
 
         // 更新選中行
         function updateSelectedRow() {
-        d3.selectAll(".earthquake .table-tr").classed("selected", false);
-        d3.select(`.earthquake .table-tr[data-id='${selectedEarthquake.value.earthquakeNo}']`).classed("selected", true);
+            d3.selectAll(".earthquake .table-tr").classed("selected", false);
+            d3.select(`.earthquake .table-tr[data-id='${selectedEarthquake.value.earthquakeNo}']`).classed("selected", true);
         }
 
         // 提取括號內的內容
         function extractLocation(locationText) {
-        const match = locationText.match(/\(([^)]+)\)/);
-        return match ? match[1] : locationText;
+            const match = locationText.match(/\(([^)]+)\)/);
+            return match ? match[1] : locationText;
         }
 
         // 獲取縣市填充顏色
         function getCountyFillColor(d, selectedEarthquake) {
-        if (!d.properties || !d.properties["COUNTYNAME"]) {
-            console.warn("Missing COUNTYNAME in properties:", d);
+            if (!d.properties || !d.properties["COUNTYNAME"]) {
+                console.warn("Missing COUNTYNAME in properties:", d);
+                return "var(--bg2-color)";
+            }
+            if (!selectedEarthquake || !selectedEarthquake.AreaIntensity) {
+                console.warn("Missing AreaIntensity in selectedEarthquake:", selectedEarthquake);
+                return "var(--bg2-color)";
+            }
+            const areaIntensity = selectedEarthquake.AreaIntensity.find(area => area.countyName === d.properties["COUNTYNAME"]);
+            if (areaIntensity) {
+                const intensityValue = parseInt(areaIntensity.intensity);
+                return colorScale(intensityValue);
+            }
             return "var(--bg2-color)";
-        }
-        if (!selectedEarthquake || !selectedEarthquake.AreaIntensity) {
-            console.warn("Missing AreaIntensity in selectedEarthquake:", selectedEarthquake);
-            return "var(--bg2-color)";
-        }
-        const areaIntensity = selectedEarthquake.AreaIntensity.find(area => area.countyName === d.properties["COUNTYNAME"]);
-        if (areaIntensity) {
-            const intensityValue = parseInt(areaIntensity.intensity);
-            return colorScale(intensityValue);
-        }
-        return "var(--bg2-color)";
         }
 
         // 處理縣市懸停事件
         function handleCountyHover(event, d) {
-        d3.select(event.currentTarget).style("opacity", 1);
-        const countyName = d.properties["COUNTYNAME"];
-        const areaIntensity = selectedEarthquake.value.AreaIntensity.find(area => area.countyName === countyName);
-        const intensityValue = areaIntensity ? areaIntensity.intensity : "0";
+            d3.select(event.currentTarget).style("opacity", 1);
+            const countyName = d.properties["COUNTYNAME"];
+            const areaIntensity = selectedEarthquake.value.AreaIntensity.find(area => area.countyName === countyName);
+            const intensityValue = areaIntensity ? areaIntensity.intensity : "0";
 
-        updateTooltipContent(countyName, intensityValue);
-        positionTooltip(event);
+            updateTooltipContent(countyName, intensityValue);
+            positionTooltip(event);
         }
 
         // 處理縣市鼠標移出事件
         function handleCountyMouseOut(event, d) {
-        d3.select(event.currentTarget).style("opacity", 0.5);
-        d3.select(".county-tip").style("visibility", "hidden");
+            d3.select(event.currentTarget).style("opacity", 0.5);
+            d3.select(".county-tip").style("visibility", "hidden");
         }
 
         // 更新工具提示內容
         function updateTooltipContent(countyName, intensityValue) {
-        d3.select("#tooltip-county").text(countyName);
-        d3.select("#tooltip-intensity").text(intensityValue + "級");
+            d3.select("#tooltip-county").text(countyName);
+            d3.select("#tooltip-intensity").text(intensityValue + "級");
         }
 
         // 定位工具提示
         function positionTooltip(event) {
-        const tooltip = d3.select(".county-tip");
-        if (!tooltip.node()) return;
+            const tooltip = d3.select(".county-tip");
+            if (!tooltip.node()) return;
 
-        const tooltipWidth = tooltip.node().offsetWidth;
-        const tooltipHeight = tooltip.node().offsetHeight;
-        const pageWidth = window.innerWidth;
-        const pageHeight = window.innerHeight;
+            const tooltipWidth = tooltip.node().offsetWidth;
+            const tooltipHeight = tooltip.node().offsetHeight;
+            const pageWidth = window.innerWidth;
+            const pageHeight = window.innerHeight;
 
-        let left = event.pageX + 10;
-        let top = event.pageY - tooltipHeight - 10;
+            let left = event.pageX + 10;
+            let top = event.pageY - tooltipHeight - 10;
 
-        if (left + tooltipWidth > pageWidth) {
-            left = event.pageX - tooltipWidth - 10;
-        }
+            if (left + tooltipWidth > pageWidth) {
+                left = event.pageX - tooltipWidth - 10;
+            }
 
-        if (top < 0) {
-            top = event.pageY + 10;
-        }
+            if (top < 0) {
+                top = event.pageY + 10;
+            }
 
-        tooltip.style("left", `${left}px`)
-               .style("top", `${top}px`)
-               .style("visibility", "visible");
+            tooltip.style("left", `${left}px`)
+                .style("top", `${top}px`)
+                .style("visibility", "visible");
         }
 
         // 更新地圖顏色
         function updateMapColors() {
-        g.selectAll("path")
-            .attr("fill", d => getCountyFillColor(d, selectedEarthquake.value));
+            g.selectAll("path")
+                .attr("fill", d => getCountyFillColor(d, selectedEarthquake.value));
         }
 
         // 切換移動端列表顯示
@@ -437,15 +447,16 @@
         }
 
         return {
-        earthquakeData,
-        selectedEarthquake,
-        selectEarthquake,
-        extractLocation,
-        getIntensityClass,
-        isMobile,
-        isMobileListVisible,
-        toggleMobileList,
-        showDetailModal
+            earthquakeData,
+            selectedEarthquake,
+            selectEarthquake,
+            extractLocation,
+            getIntensityClass,
+            isMobile,
+            isMobileListVisible,
+            toggleMobileList,
+            showDetailModal,
+            loading
         };
     }
 };
@@ -465,6 +476,10 @@
     margin: auto 30px;
     flex: 1;
     height: 100%;
+}
+
+.map-container.hidden {
+    display: none;
 }
 
 .info-container {
@@ -707,6 +722,15 @@ path.county:hover {
 .close-button .close-icon {
     color: var(--font-color);
     font-size: 18px;
+}
+
+.loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--font-color);
+    font-size: 20px;
 }
 
 @media screen and (max-width: 768px) {
