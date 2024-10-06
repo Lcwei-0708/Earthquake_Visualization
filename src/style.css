@@ -1,0 +1,79 @@
+.light-theme {
+  --bg-color: #ffffff;    /* 背景顏色-1 */
+  --bg2-color: #efefef;    /* 背景顏色-2 */
+  --bg3-color: #dfdfdf;    /* 背景顏色-3 */
+  --bg4-color: rgb(249, 249, 249);    /* 背景顏色-4 */
+  --font-color: #191919;    /* 文字顏色-1 */
+  --font2-color: #3d3d3d;    /* 文字顏色-2 */
+  --font3-color: #757575;    /* 文字顏色-3 */
+  --sp-color: #ab1c1c;    /* 特殊顏色-1 */
+  --hover-bg-color: #f6f6f6;    /* Hover背景顏色-1 */
+  --hover-font-color: #6c6c6c;    /* Hover文字顏色-1 */
+  --shadow-color: 0px 0px 10px rgba(27, 27, 27, 0.305);    /* 陰影顏色-1 */
+  --shadow2-color: 0px 0px 5px rgba(40, 40, 40, 0.316);    /* 陰影顏色-2 */
+  --shadow3-color: 0px 0px 3px rgba(68, 68, 68, 0.316);    /* 陰影顏色-3 */
+  --shadow4-color: 0px 0px 7px rgba(210, 210, 210);    /* 陰影顏色-4 */
+  --shadow5-color: 0px 0px 20px rgb(210, 210, 210);    /* 陰影顏色-5 */
+  --earthquake-span-1: #70d258;   /* 震度級數背景顏色 */
+  --earthquake-span-2: #ffe13a;   /* 震度級數背景顏色 */
+  --earthquake-span-3: #f4802d;   /* 震度級數背景顏色 */
+  --earthquake-span-4: #dc3737;   /* 震度級數背景顏色 */
+  --border-color: #c8c8c8;   /* 邊框顏色 */
+}
+
+.dark-theme {
+  --bg-color: #212121;    /* 背景顏色-1 */
+  --bg2-color: #2d2d2d;    /* 背景顏色-2 */
+  --bg3-color: #454545;    /* 背景顏色-3 */
+  --bg4-color: rgb(27, 27, 27);    /* 背景顏色-4 */
+  --font-color: #ffffff;    /* 文字顏色-1 */
+  --font2-color: #e7e7e7;    /* 文字顏色-2 */
+  --font3-color: #bdbdbd;    /* 文字顏色-3 */
+  --sp-color: #f74747;    /* 特殊顏色-1 */
+  --hover-bg-color: #252525;    /* Hover背景顏色-1 */
+  --hover-font-color: #949494;    /* Hover文字顏色-1 */
+  --shadow-color: 0px 0px 10px rgba(128, 128, 128, 0.305);    /* 陰影顏色-1 */
+  --shadow2-color: 0px 0px 8px rgba(65, 65, 65, 0.332);    /* 陰影顏色-2 */
+  --shadow3-color: 0px 0px 10px rgba(62, 62, 62, 0.316);    /* 陰影顏色-3 */
+  --shadow4-color: 0px 0px 7px rgba(84, 84, 84);    /* 陰影顏色-4 */
+  --shadow5-color: 0px 0px 20px rgb(84, 84, 84);    /* 陰影顏色-5 */
+  --earthquake-span-1: #378125;   /* 震度級數背景顏色 */
+  --earthquake-span-2: #bfac00;   /* 震度級數背景顏色 */
+  --earthquake-span-3: #e38029;   /* 震度級數背景顏色 */
+  --earthquake-span-4: #b13131;   /* 震度級數背景顏色 */
+  --border-color: #4a4a4a;   /* 邊框顏色 */
+}
+
+*::selection {
+  background: var(--font2-color);
+  color: var(--bg-color);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+} 
+
+::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 10px rgba(0,0,0,0.3); 
+  border-radius: 5px;
+} 
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--font3-color);
+  border-radius: 5px;
+}
+
+/*--------------------------------------------------------------
+# Layout
+--------------------------------------------------------------*/
+body {
+  background-color: var(--bg4-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#app {  
+  display: block;
+  min-height: 90vh;
+  margin: auto;
+}
