@@ -10,7 +10,7 @@
                     </th>
                 </tr>
             </thead>
-            <tbody id="mobile-earthquake" :class="['table-body mobile-list', { show: isMobileListVisible }]">
+            <tbody v-if="isMobileListVisible" id="mobile-earthquake" :class="['table-body mobile-list', { show: isMobileListVisible }]">
                 <tr v-for="(earthquake, index) in earthquakeData" 
                     :key="earthquake.earthquakeNo" 
                     :class="['table-tr', { selected: earthquake === selectedEarthquake }]" 
