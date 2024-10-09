@@ -23,11 +23,11 @@
     font-size: 14px;
     text-align: center;
     padding: 0px 0 20px;
-    position: absolute;
+    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    margin-top: 80px;
+    z-index: 1000;
 }
 
 .container {
@@ -55,5 +55,11 @@
     font-size: 20px;
     color: var(--font-color);
     vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+    .footer {
+        position: static;
+    }
 }
 </style>

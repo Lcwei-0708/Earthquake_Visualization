@@ -70,6 +70,7 @@
 body {
   background-color: var(--bg4-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #app {  

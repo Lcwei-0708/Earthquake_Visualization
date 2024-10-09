@@ -583,6 +583,7 @@
 }
 
 .mobile-list.show {
+    display: block;
     height: 55vh;
     max-height: 55vh;
     overflow-y: auto;
@@ -759,7 +760,7 @@
   .main {
     flex-direction: column;
     padding: 20px 0;
-    margin-bottom: 100px;
+    margin-bottom: 80px;
   }
 
   .map-container {
