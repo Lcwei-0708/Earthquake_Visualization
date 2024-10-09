@@ -51,13 +51,14 @@ export default {
 
 <style scoped>
 .header {
-    position: absolute;
+    position: fixed;
     top: 20px;
     right: 20px;
+    z-index: 10000;
 }
 
 .theme-button {
-    background-color: var(--bg2-color);
+    background-color: var(--bg-color);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow4-color);
     color: var(--font-color);
@@ -88,6 +89,10 @@ export default {
     .header {
         top: 10px;
         right: 10px;
+    }
+
+    .theme-button {
+        box-shadow: none;
     }
 }
 </style>

@@ -1,16 +1,16 @@
 <template>    
     <div v-if="loading" class="loading-indicator">載入中...</div>
     <div id="main" class="main">
-        <table v-if="isMobile && !loading" id="mobile-table" class="post-table mobile-table">
+        <table v-if="isMobile && !loading" id="mobile-table" :class="['post-table', 'mobile-table', { show: isMobileListVisible }]">
             <thead class="table-header mobile-title" @click="toggleMobileList">
                 <tr class="table-tr">
-                    <th class="table-th center" colspan="2">
+                    <th class="table-th" colspan="2">
                         臺灣近期地震列表
-                        <iconify-icon icon="mdi:filter-menu" class="icon"></iconify-icon>
+                        <iconify-icon icon="eva:arrow-down-fill" :class="['icon', { rotate: isMobileListVisible }]" @click="toggleMobileList"></iconify-icon>
                     </th>
                 </tr>
             </thead>
-            <tbody v-if="isMobileListVisible" id="mobile-earthquake" :class="['table-body mobile-list', { show: isMobileListVisible }]">
+            <tbody id="mobile-earthquake" :class="['table-body mobile-list', { show: isMobileListVisible }]">
                 <tr v-for="(earthquake, index) in earthquakeData" 
                     :key="earthquake.earthquakeNo" 
                     :class="['table-tr', { selected: earthquake === selectedEarthquake }]" 
@@ -185,28 +185,28 @@
 
         // 初始化地圖
         function initializeMap() {
-        svg = d3.select(".taiwan")
-            .attr("preserveAspectRatio", "xMidYMid meet")
-            .attr("viewBox", "0 0 800 600");
-        g = svg.append("g");
+            svg = d3.select(".taiwan")
+                .attr("preserveAspectRatio", "xMidYMid meet")
+                .attr("viewBox", "0 0 800 600");
+            g = svg.append("g");
 
-        const initialScale = getInitialScale();
-        projectmethod = d3.geoMercator().center([121, 23.8]).scale(initialScale);
-        pathGenerator = d3.geoPath().projection(projectmethod);
+            const initialScale = getInitialScale();
+            projectmethod = d3.geoMercator().center([121, 23.8]).scale(initialScale);
+            pathGenerator = d3.geoPath().projection(projectmethod);
 
-        const features = topojson.feature(taiwanMapData, taiwanMapData.objects.Taiwan).features;
-        g.selectAll("path")
-            .data(features)
-            .enter()
-            .append("path")
-            .attr("d", pathGenerator)
-            .attr("class", "county")
-            .attr("fill", "var(--bg2-color)")
-            .attr("stroke", "var(--font-color)")
-            .attr("opacity", 0.5)
-            .on("mouseover", (event, d) => handleCountyHover(event, d))
-            .on("mousemove", (event) => positionTooltip(event))
-            .on("mouseout", (event, d) => handleCountyMouseOut(event, d));
+            const features = topojson.feature(taiwanMapData, taiwanMapData.objects.Taiwan).features;
+            g.selectAll("path")
+                .data(features)
+                .enter()
+                .append("path")
+                .attr("d", pathGenerator)
+                .attr("class", "county")
+                .attr("fill", "var(--bg2-color)")
+                .attr("stroke", "var(--font-color)")
+                .attr("opacity", 0.5)
+                .on("mouseover", (event, d) => handleCountyHover(event, d))
+                .on("mousemove", (event) => positionTooltip(event))
+                .on("mouseout", (event, d) => handleCountyMouseOut(event, d));
         }
 
         // 繪製地圖
@@ -219,7 +219,7 @@
 
         // 獲取初始比例
         function getInitialScale() {
-            if (window.innerWidth < 768) return 16000;
+            if (window.innerWidth < 768) return 16500;
             if (window.innerWidth < 1200) return 15000;
             return 15000;
         }
@@ -504,7 +504,7 @@
     filter: drop-shadow(var(--shadow5-color));
 }
 
-path.county:hover {
+.county:hover {
     opacity: 1 !important;
 }
 
@@ -538,34 +538,56 @@ path.county:hover {
 }
 
 .mobile-table {
-    width: 90%;
+    width: 100%;
     position: fixed;
-    top: 60px;
+    margin: 0px auto;
+    top: 0px;
     left: 50%;
+    border-radius: 0;
     transform: translateX(-50%);
     z-index: 1000;
-    background-color: var(--bg3-color);
+    border: none;
+    background-color: var(--bg-color);
+}
+
+.mobile-table.show {
+    box-shadow: var(--shadow-color);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.mobile-table .table-th {
+    padding-left: 20px;
+    justify-content: start;
+    text-align: left;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .mobile-title th .icon {
-    margin-left: 10px;
-    font-size: 20px;
+    font-size: 28px;
+    height: 50px;
     vertical-align: middle;
+    pointer-events: none;
+    transition: transform 0.3s ease-in-out;
+}
+
+.mobile-title th .icon.rotate {
+    transform: rotate(180deg);
 }
 
 .mobile-list {
-    opacity: 0;
-    visibility: collapse;
-    transition: opacity 0.3s ease;
+    display: block;
+    height: 0;
+    max-height: 0;
+    transition: max-height 0.3s ease-in-out;
 }
 
 .mobile-list.show {
-    max-height: 599px;
+    height: 55vh;
+    max-height: 55vh;
     overflow-y: auto;
     border: none;
-    display: block;
-    opacity: 1;
-    visibility: visible;
+    transition: max-height 0.3s ease-in-out;
 }
 
 .table-th {
@@ -736,7 +758,7 @@ path.county:hover {
 @media screen and (max-width: 768px) {
   .main {
     flex-direction: column;
-    padding: 20px 0;
+    padding: 20px 0 80px;
   }
 
   .map-container {
