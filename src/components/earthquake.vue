@@ -557,6 +557,7 @@
 
 .mobile-table .table-th {
     padding-left: 20px;
+    height: 50px;
     justify-content: start;
     text-align: left;
     background-color: var(--bg-color);
@@ -565,7 +566,6 @@
 
 .mobile-title th .icon {
     font-size: 28px;
-    height: 50px;
     vertical-align: middle;
     pointer-events: none;
     transition: transform 0.3s ease-in-out;
@@ -576,7 +576,7 @@
 }
 
 .mobile-list {
-    display: block;
+    display: none;
     height: 0;
     max-height: 0;
     transition: max-height 0.3s ease-in-out;
@@ -758,7 +758,8 @@
 @media screen and (max-width: 768px) {
   .main {
     flex-direction: column;
-    padding: 20px 0 80px;
+    padding: 20px 0;
+    margin-bottom: 100px;
   }
 
   .map-container {
