@@ -18,7 +18,7 @@
                     <td class="table-td center intensity-td">
                         <span 
                             :class="['intensity', getIntensityClass(earthquake.reportColor)]">
-                            {{ earthquake.intensity || '未知' }}
+                            {{ formatIntensity(earthquake.intensity) }}
                         </span>
                     </td>
                     <td class="table-td">
@@ -76,7 +76,7 @@
                     <td class="table-td center intensity-td">
                         <span 
                             :class="['intensity', getIntensityClass(earthquake.reportColor)]">
-                            {{ earthquake.intensity || '未知' }}
+                            {{ formatIntensity(earthquake.intensity) }}
                         </span>
                     </td>
                     <td class="table-td">
@@ -446,6 +446,23 @@
             isMobileListVisible.value = !isMobileListVisible.value;
         }
 
+        // 新增格式化震度的函數
+        function formatIntensity(intensity) {
+            if (!intensity) return '未知';
+            
+            // 移除原本的 "級" 字
+            const value = intensity.replace('級', '');
+            const numValue = parseFloat(value);
+            
+            // 如果是整數，直接加上 "級"
+            if (Number.isInteger(numValue)) {
+                return numValue + '級';
+            }
+            
+            // 如果有 .5，則取整數加上 "強"
+            return Math.floor(numValue) + '強';
+        }
+
         return {
             earthquakeData,
             selectedEarthquake,
@@ -456,7 +473,8 @@
             isMobileListVisible,
             toggleMobileList,
             showDetailModal,
-            loading
+            loading,
+            formatIntensity
         };
     }
 };

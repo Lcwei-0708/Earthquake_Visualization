@@ -47,6 +47,7 @@
 *::selection {
   background: var(--font2-color);
   color: var(--bg-color);
+  font-family: 'Noto Sans TC', sans-serif;
 }
 
 ::-webkit-scrollbar {
