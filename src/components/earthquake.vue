@@ -380,7 +380,16 @@
             }
             const areaIntensity = selectedEarthquake.AreaIntensity.find(area => area.countyName === d.properties["COUNTYNAME"]);
             if (areaIntensity) {
-                const intensityValue = parseFloat(areaIntensity.intensity);
+                // 處理震度值轉換
+                const intensityStr = areaIntensity.intensity;
+                let intensityValue;
+                if (intensityStr.includes('強')) {
+                    intensityValue = parseFloat(intensityStr.replace('強', '')) + 0.5;
+                } else if (intensityStr.includes('弱')) {
+                    intensityValue = parseFloat(intensityStr.replace('弱', ''));
+                } else {
+                    intensityValue = parseFloat(intensityStr.replace('級', ''));
+                }
                 return colorScale(intensityValue);
             }
             return "var(--bg2-color)";
@@ -446,21 +455,27 @@
             isMobileListVisible.value = !isMobileListVisible.value;
         }
 
-        // 新增格式化震度的函數
+        // 格式化震度的函數
         function formatIntensity(intensity) {
             if (!intensity) return '未知';
             
-            // 移除原本的 "級" 字
-            const value = intensity.replace('級', '');
-            const numValue = parseFloat(value);
+            // 先移除所有的 "級" 字
+            let value = intensity.replace('級', '');
             
-            // 如果是整數，直接加上 "級"
-            if (Number.isInteger(numValue)) {
-                return numValue + '級';
+            // 如果包含 "弱" 或 "強" 就直接返回
+            if (value.includes('弱') || value.includes('強')) {
+                return value;
             }
             
-            // 如果有 .5，則取整數加上 "強"
-            return Math.floor(numValue) + '強';
+            const numValue = parseFloat(value);
+            
+            // 特別處理 5、6 級的情況
+            if (numValue === 5 || numValue === 6) {
+                return numValue + '弱';
+            }
+            
+            // 其他級數加上 "級"
+            return numValue + '級';
         }
 
         return {
