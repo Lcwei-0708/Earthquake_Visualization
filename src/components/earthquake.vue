@@ -380,7 +380,7 @@
             }
             const areaIntensity = selectedEarthquake.AreaIntensity.find(area => area.countyName === d.properties["COUNTYNAME"]);
             if (areaIntensity) {
-                const intensityValue = parseInt(areaIntensity.intensity);
+                const intensityValue = parseFloat(areaIntensity.intensity);
                 return colorScale(intensityValue);
             }
             return "var(--bg2-color)";
@@ -391,7 +391,7 @@
             d3.select(event.currentTarget).style("opacity", 1);
             const countyName = d.properties["COUNTYNAME"];
             const areaIntensity = selectedEarthquake.value.AreaIntensity.find(area => area.countyName === countyName);
-            const intensityValue = areaIntensity ? areaIntensity.intensity : "0";
+            const intensityValue = areaIntensity ? areaIntensity.intensity + '' : "0";
 
             updateTooltipContent(countyName, intensityValue);
             positionTooltip(event);
@@ -406,7 +406,7 @@
         // 更新工具提示內容
         function updateTooltipContent(countyName, intensityValue) {
             d3.select("#tooltip-county").text(countyName);
-            d3.select("#tooltip-intensity").text(intensityValue + "級");
+            d3.select("#tooltip-intensity").text(formatIntensity(intensityValue + '級'));
         }
 
         // 定位工具提示
