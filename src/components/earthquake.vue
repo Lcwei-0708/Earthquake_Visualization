@@ -227,17 +227,23 @@
         // 獲取地震數據
         async function fetchEarthquakeData() {
             try {
-                const response = await fetch('https://api.lcwei.site/api/earthquake_data', {
+                const response = await fetch('https://demo.cwei.dev/api/earthquake/', {
                     method: 'GET',
                     headers: { 
                         'Content-Type': 'application/json'
                     }
                 });
                 const data = await response.json();
-                earthquakeData.value = data.earthquakes.map(eq => ({
+                earthquakeData.value = (data.data || []).map(eq => ({
                     ...eq,
-                    intensity: eq.maxIntensity + "級",
-                    datetime: eq.originTime
+                    intensity: eq.maxIntensity,
+                    datetime: eq.originTime,
+                    magnitude: parseFloat(eq.magnitude),
+                    depth: parseFloat(eq.depth),
+                    AreaIntensity: eq.AreaIntensity?.map(area => ({
+                        ...area,
+                        intensity: area.intensity
+                    })) || []
                 }));
             } catch (error) {
                 console.error("Error fetching earthquake data:", error);
